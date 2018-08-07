@@ -275,7 +275,12 @@ module Sidekiq
 
         #set last enqueue time - from args or from existing job
         if args['last_enqueue_time'] && !args['last_enqueue_time'].empty?
-          @last_enqueue_time = DateTime.strptime(args['last_enqueue_time'], LAST_ENQUEUE_TIME_FORMAT)
+          begin
+            @last_enqueue_time = DateTime.strptime(args['last_enqueue_time'], LAST_ENQUEUE_TIME_FORMAT)
+          rescue ArgumentError => e
+            # Retry has date in different format.
+            @last_enqueue_time = DateTime.strptime(args['last_enqueue_time'], '%Y-%m-%dT%H:%M:%S%z')
+          end
         else
           @last_enqueue_time = last_enqueue_time_from_redis
         end
